@@ -18,10 +18,11 @@ OffPitch is your invite-only party hub. Create a session, share the ID with your
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: [Next.js](https://nextjs.org/)
-- **Backend**: Java [Spring Boot](https://spring.io/projects/spring-boot)
-- **Database**: PostgreSQL
-- **Real-Time Communication**: WebRTC
+- **Frontend**: [Next.js](https://nextjs.org/) (Single Page Application handling UI & Session State)
+- **Backend**: Java 21 & Spring Boot 4.1 (Built with Maven, no Lombok)
+- **Authentication**: OAuth2 Resource Server (Validating JWTs from Next.js)
+- **Database**: PostgreSQL (Leveraging JSONB for fast audio-timeline queries)
+- **Real-Time Communication**: WebRTC (Powered by Java Virtual Threads for massive scalability)
 
 ## 🗄️ Database Schema Overview
 
@@ -29,7 +30,7 @@ The Postgres database consists of the following core tables:
 - `users`: Stores user credentials, Google Auth details, and cool usernames.
 - `song`: Stores metadata for all available songs.
 - `session`: Manages active karaoke rooms/lobbies.
-- `song_detail`: Contains the dynamic audio data (bass, echo, and effects) to drive frontend processing and visuals.
+- `song_detail`: Contains the dynamic audio data (bass, echo, and effects) mapped to specific timestamps. Stored as **JSONB** for blazing-fast querying via GIN indexes.
 - `session_users`: Maps users to their active sessions.
 
 ## 🔌 Backend Endpoints
