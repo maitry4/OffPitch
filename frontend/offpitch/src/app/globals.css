@@ -24,3 +24,7 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+::selection {
+  background-color: rgba(220, 38, 38, 0.4); /* transparent red */
+  color: white;
+}
