@@ -25,6 +25,3 @@ The `/karaokehouse` room requires complex, stateful connections to route WebRTC 
 - **The Problem**: FastAPI relies on standard, lightweight WebSocket utilities (like `starlette.websockets`).
 - **The FastAPI Failure**: It lacks an out-of-the-box, enterprise-grade state manager to handle room persistence, connection cleanups, and thread safety across thousands of concurrent chat rooms. You would have to write this complex connection-management code entirely from scratch.
 - **The Java Advantage**: Spring Boot provides robust, built-in WebSocket session architectures, message brokers, and sub-protocol support natively, making it much easier to implement concepts like STUN/TURN handling and room state.
-
-
-Java over FastAPI for Audio/WebRTC: This is your most critical and correct decision. Python's GIL (Global Interpreter Lock) makes it notoriously bad at CPU-intensive parallel processing (like on-the-fly audio rendering for your /moments endpoint). Java's robust multi-threading and native ByteBuffer for raw data manipulation will prevent your karaoke streams from stuttering when someone clips a reel.
