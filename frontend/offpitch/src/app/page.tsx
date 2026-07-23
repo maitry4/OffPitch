@@ -13,11 +13,11 @@ export default function Home() {
         className="object-cover object-center"
       />
       {/* Black overlay */}
-      <div className="absolute inset-0 z-[5] bg-black/75" />
+      <div className="absolute inset-0 z-[5] bg-black/45" />
       {/* Girl image, right side */}
       <div className="absolute bottom-0 right-0 z-10 h-full w-full sm:w-[65%]">
         <Image
-          src="/asset_img_21.png"
+          src="/girl_img.png"
           alt="Woman wearing headphones, singing"
           fill
           priority

@@ -1,0 +1,206 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Karaoke Style Player</title>
+    <style>
+        :root {
+            --bg-color: #0c0c0c;
+            --text-dark: rgba(255, 255, 255, 0.25);
+            --text-fill: #ffffff;
+            --highlight-color: #1db954; /* Spotify Green */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .player-container {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 120px);
+            padding: 30px 20px;
+            box-sizing: border-box;
+        }
+
+        .track-info {
+            margin-bottom: 30px;
+        }
+
+        .track-info h1 {
+            color: #fff;
+            font-size: 28px;
+            margin: 0 0 5px 0;
+        }
+
+        .track-info p {
+            font-size: 18px;
+            margin: 0;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Lyrics Scroll Container */
+        .lyrics-wrapper {
+            flex-grow: 1;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            mask-image: linear-gradient(to bottom, transparent 0%, white 20%, white 80%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, white 20%, white 80%, transparent 100%);
+        }
+
+        .lyrics-wrapper::-webkit-scrollbar {
+            display: none;
+        }
+
+        .lyrics-content {
+            padding: 40% 0;
+        }
+
+        /* Line Styling */
+        .lyric-line {
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1.6;
+            margin: 32px 0;
+            transition: transform 0.3s ease, color 0.3s ease;
+            transform-origin: left center;
+            display: flex;
+            flex-wrap: wrap;
+            color: var(--text-dark);
+        }
+
+        /* Entire line lights up together since SRT lacks word-level timestamps */
+        .lyric-line.active-line {
+            transform: scale(1.03);
+            color: var(--text-fill);
+        }
+
+        /* Footer Audio Controls Bar */
+        .controls-bar {
+            width: 100%;
+            background-color: #121212;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            box-sizing: border-box;
+            border-top: 1px solid #222;
+        }
+
+        audio {
+            width: 100%;
+            max-width: 500px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="player-container">
+        <div class="track-info">
+            <h1>Him & I</h1>
+            <p>G-Eazy & Halsey</p>
+        </div>
+
+        <div class="lyrics-wrapper" id="lyricsWrapper">
+            <div class="lyrics-content" id="lyricsContent">
+                <!-- Lines injected here dynamically by JS -->
+            </div>
+        </div>
+    </div>
+
+    <div class="controls-bar">
+        <audio id="audioPlayer" controls src="./him-i.mp3"></audio>
+    </div>
+
+    <script>
+        // Your exact JSON format pasted directly below
+        const rawJsonData = [{"line":1,"start":"00:00:00,094","end":"00:00:05,999","text":"Cross my heart, hope to die Through my lover, I'd never lie"},{"line":2,"start":"00:00:06,093","end":"00:00:10,997","text":"Said be true, I swear I'll try In the end, it's him and I"},{"line":3,"start":"00:00:11,090","end":"00:00:16,996","text":"He's got his head, I'm on my mind We got that love, the crazy kind"},{"line":4,"start":"00:00:17,090","end":"00:00:21,994","text":"I am his, and he is mine In the end, it's him and I"},{"line":5,"start":"00:00:22,087","end":"00:00:28,006","text":"My 65 speeding up the PCH, a hell of a ride They don't wanna see us make it, they just wanna divide"},{"line":6,"start":"00:00:28,100","end":"00:00:33,004","text":"2017, Bonnie and Clyde Wouldn't see the point of living on if one of us died"},{"line":7,"start":"00:00:33,097","end":"00:00:39,003","text":"Got that kind of style, everybody try to rip off YSL dress under when she take the mink off"},{"line":8,"start":"00:00:39,097","end":"00:00:41,996","text":"Silk on her body, pull it down and watch it slip off"},{"line":9,"start":"00:00:42,090","end":"00:00:45,003","text":"Ever catch me cheating, she would try to cut my"},{"line":10,"start":"00:00:45,096","end":"00:00:46,993","text":"Crazy, but I love her, I could never run from her"},{"line":11,"start":"00:00:47,087","end":"00:00:50,000","text":"Hitting no rubber, never would, no one touch her"},{"line":12,"start":"00:00:50,093","end":"00:00:53,006","text":"Swear we'd drive each other mad, she'd be so stubborn"},{"line":13,"start":"00:00:53,100","end":"00:00:55,999","text":"But what the f*** is love with no pain, no suffer"},{"line":14,"start":"00:00:56,093","end":"00:00:58,004","text":"Incense, the s***, it gets dense"},{"line":15,"start":"00:00:58,097","end":"00:01:00,997","text":"She knows when I'm out, I feel like she could just sense"},{"line":16,"start":"00:01:01,090","end":"00:01:04,003","text":"If I had a million dollars, I was down to ten cents"},{"line":17,"start":"00:01:04,097","end":"00:01:05,994","text":"She'd be down for whatever, never gotta convince"},{"line":18,"start":"00:01:06,088","end":"00:01:11,005","text":"I love you, I hope to die Through my lover, I'd never lie"},{"line":19,"start":"00:01:11,098","end":"00:01:17,004","text":"Said be true, I swear I'll try In the end, it's him and I"},{"line":20,"start":"00:01:17,098","end":"00:01:22,001","text":"He's got his head, I'm on my mind We got that love, the crazy kind"},{"line":21,"start":"00:01:22,095","end":"00:01:28,001","text":"I am his and he is mine In the end, it's him and I"},{"line":22,"start":"00:01:36,005","end":"00:01:38,998","text":"In the end, it's him and I"},{"line":23,"start":"00:01:48,003","end":"00:01:50,997","text":"In the end, it's him and I"},{"line":24,"start":"00:01:51,090","end":"00:01:53,001","text":"It's her and I, mobbin' to the end of time"},{"line":25,"start":"00:01:53,094","end":"00:01:55,994","text":"Only one who gets me, I'm a crazy f*** Gemini"},{"line":26,"start":"00:01:56,087","end":"00:01:56,996","text":"Remember this for when I die"},{"line":27,"start":"00:01:57,090","end":"00:02:00,002","text":"Everybody dressin' all black, suits in a tie"},{"line":28,"start":"00:02:00,096","end":"00:02:02,995","text":"My funeral be lit if I ever go down or get caught"},{"line":29,"start":"00:02:03,089","end":"00:02:05,000","text":"Or they identify, my b***h was the most solid"},{"line":30,"start":"00:02:05,093","end":"00:02:07,004","text":"Nothing to solidify, she would never cheat"},{"line":31,"start":"00:02:07,098","end":"00:02:08,995","text":"You never see her with a different guy"},{"line":32,"start":"00:02:09,088","end":"00:02:10,999","text":"Ever tell you different, then it's a lie"},{"line":33,"start":"00:02:11,093","end":"00:02:14,006","text":"See that's my down b***h, see that's my soldier"},{"line":34,"start":"00:02:14,099","end":"00:02:16,999","text":"She keep that dang dang, if anyone goes there"},{"line":35,"start":"00:02:17,092","end":"00:02:19,003","text":"We're calm and collected, she keeps her composure"},{"line":36,"start":"00:02:19,096","end":"00:02:21,996","text":"And she gon' ride for me, until this thing over"},{"line":37,"start":"00:02:22,089","end":"00:02:25,002","text":"We do drugs together, we tell claps together"},{"line":38,"start":"00:02:25,096","end":"00:02:27,995","text":"And we both go crazy, if we was to sever"},{"line":39,"start":"00:02:28,089","end":"00:02:31,002","text":"You know, we keep mobbin', it's just me and my b***h"},{"line":40,"start":"00:02:31,095","end":"00:02:33,006","text":"The world, we just gon' keep getting rich, you know"},{"line":41,"start":"00:02:33,100","end":"00:02:35,999","text":"Cross my heart, hope to die"},{"line":42,"start":"00:02:36,093","end":"00:02:38,003","text":"Through my lover, I'd never lie"},{"line":43,"start":"00:02:38,097","end":"00:02:40,996","text":"Said be true, I swear I'll try"},{"line":44,"start":"00:02:41,090","end":"00:02:44,003","text":"In the end, it's him and I"},{"line":45,"start":"00:02:44,096","end":"00:02:46,996","text":"He's got his head, I'm on my mind"},{"line":46,"start":"00:02:47,089","end":"00:02:50,002","text":"We got that love, the crazy kind"},{"line":47,"start":"00:02:50,096","end":"00:02:52,007","text":"I am his and he is mine"},{"line":48,"start":"00:02:52,100","end":"00:02:55,000","text":"In the end, it's him and I"},{"line":49,"start":"00:02:55,093","end":"00:02:57,004","text":"Him and I"},{"line":50,"start":"00:03:03,003","end":"00:03:05,996","text":"In the end, it's him and I"},{"line":51,"start":"00:03:06,090","end":"00:03:08,001","text":"Him and I"},{"line":52,"start":"00:03:08,094","end":"00:03:10,005","text":"Him and I"},{"line":53,"start":"00:03:16,004","end":"00:03:17,995","text":"In the end, it's him and I"},{"line":54,"start":"00:03:18,089","end":"00:03:18,997","text":"Cross my heart, hope to die"},{"line":55,"start":"00:03:19,091","end":"00:03:20,000","text":"To you, I'd never lie"},{"line":56,"start":"00:03:20,093","end":"00:03:22,004","text":"For you, I'd take a life"},{"line":57,"start":"00:03:22,097","end":"00:03:23,995","text":"It's him and I, and I swear"},{"line":58,"start":"00:03:24,088","end":"00:03:25,999","text":"To the end, I'ma ride with you"},{"line":59,"start":"00:03:26,093","end":"00:03:28,003","text":"Mobbin', get money, get high with you"},{"line":60,"start":"00:03:28,097","end":"00:03:29,994","text":"Cross my heart, hope to die"},{"line":61,"start":"00:03:30,088","end":"00:03:30,996","text":"This is our ride or die"},{"line":62,"start":"00:03:31,090","end":"00:03:34,003","text":"You can confide in me, there's none to hide"},{"line":63,"start":"00:03:34,096","end":"00:03:35,005","text":"And I swear"},{"line":64,"start":"00:03:35,098","end":"00:03:36,996","text":"Stay solid, never lie to you"},{"line":65,"start":"00:03:37,089","end":"00:03:39,000","text":"Swear most likely, I'ma die with you"},{"line":66,"start":"00:03:39,094","end":"00:03:41,004","text":"Cross my heart, hope to die"},{"line":67,"start":"00:03:41,098","end":"00:03:43,997","text":"Through my lover, I'd never lie"},{"line":68,"start":"00:03:44,091","end":"00:03:47,004","text":"Said be true, I swear I'll try"},{"line":69,"start":"00:03:47,097","end":"00:03:48,995","text":"In the end, it's him and I"},{"line":70,"start":"00:03:49,088","end":"00:03:52,001","text":"He's got his head, I'm on my mind"},{"line":71,"start":"00:03:52,095","end":"00:03:54,994","text":"We got that love, the crazy kind"},{"line":72,"start":"00:03:55,088","end":"00:03:58,001","text":"I am his and he is mine"},{"line":73,"start":"00:03:58,094","end":"00:04:00,005","text":"In the end, it's him and I"},{"line":74,"start":"00:04:00,098","end":"00:04:01,996","text":"Him and I"},{"line":75,"start":"00:04:07,995","end":"00:04:11,002","text":"In the end, it's him and I"},{"line":76,"start":"00:04:11,095","end":"00:04:13,006","text":"Him and I"},{"line":77,"start":"00:04:20,996","end":"00:04:24,003","text":"In the end, it's him and I"}]
+
+
+        // Helper function to turn "00:00:06,093" timestamp strings into absolute seconds
+        function srtTimeToSeconds(timeString) {
+            const parts = timeString.split(':');
+            const secondsParts = parts[2].split(',');
+            const hours = parseInt(parts[0], 10);
+            const minutes = parseInt(parts[1], 10);
+            const seconds = parseInt(secondsParts[0], 10);
+            const milliseconds = parseInt(secondsParts[1], 10);
+            
+            return (hours * 3600) + (minutes * 60) + seconds + (milliseconds / 1000);
+        }
+
+        // Process data array into clean runtime objects
+        const karaokeData = rawJsonData.map(item => {
+            return {
+                lineStart: srtTimeToSeconds(item.start),
+                text: item.text
+            };
+        });
+
+        const audioPlayer = document.getElementById('audioPlayer');
+        const lyricsContent = document.getElementById('lyricsContent');
+        const lyricsWrapper = document.getElementById('lyricsWrapper');
+
+        // Step 1: Render structural text segments into HTML elements
+        karaokeData.forEach((lineData, lineIndex) => {
+            const lineElement = document.createElement('div');
+            lineElement.classList.add('lyric-line');
+            lineElement.setAttribute('data-line', lineIndex);
+            lineElement.innerText = lineData.text;
+
+            // Optional click handler to seek directly to the line's timestamp
+            lineElement.addEventListener('click', () => {
+                audioPlayer.currentTime = lineData.lineStart;
+            });
+
+            lyricsContent.appendChild(lineElement);
+        });
+
+        // Step 2: Continuous runtime audio position mapping tracking loop
+        let currentLineIndex = -1;
+
+        audioPlayer.addEventListener('timeupdate', () => {
+            const currentTime = audioPlayer.currentTime;
+
+            // Pinpoint the active rendering index segment match 
+            let activeLineIndex = karaokeData.findIndex((line, index) => {
+                const nextLine = karaokeData[index + 1];
+                return currentTime >= line.lineStart && (!nextLine || currentTime < nextLine.lineStart);
+            });
+
+            // Adjust active focus element styles when execution track advances frames
+            if (activeLineIndex !== currentLineIndex && activeLineIndex !== -1) {
+                if (currentLineIndex !== -1) {
+                    const prevLine = document.querySelector(`[data-line="${currentLineIndex}"]`);
+                    if (prevLine) prevLine.classList.remove('active-line');
+                }
+
+                currentLineIndex = activeLineIndex;
+                const activeLineElement = document.querySelector(`[data-line="${activeLineIndex}"]`);
+                
+                if (activeLineElement) {
+                    activeLineElement.classList.add('active-line');
+                    
+                    // Center the focused text smoothly inside container limits
+                    const wrapperHeight = lyricsWrapper.clientHeight;
+                    const elementTop = activeLineElement.offsetTop;
+                    const elementHeight = activeLineElement.clientHeight;
+                    lyricsWrapper.scrollTop = elementTop - (wrapperHeight / 2) + (elementHeight / 2);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
