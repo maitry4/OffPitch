@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { GoogleButton } from "@/components/ui/GoogleButton";
 import { StartSingingButton } from "@/components/ui/StartSingingButton";
+import { WaveDivider } from "@/components/ui/WaveDivider";
 import { WaveIcon } from "@/components/ui/WaveIcon";
 
 export default function Home() {
@@ -62,24 +63,5 @@ export default function Home() {
         </div>
       </main>
     </div>
-  );
-}
-
-function WaveDivider({ className }: { className?: string }) {
-  const heights = [6, 14, 8, 18, 6, 12, 16, 8, 14, 6, 10, 18, 8, 14, 6, 10, 16, 8, 12, 6];
-  return (
-    <svg viewBox="0 0 200 20" className={className} fill="none">
-      {heights.map((h, i) => (
-        <rect
-          key={i}
-          x={i * 10}
-          y={10 - h / 2}
-          width="3"
-          height={h}
-          rx="1.5"
-          fill="currentColor"
-        />
-      ))}
-    </svg>
   );
 }

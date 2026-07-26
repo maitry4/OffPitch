@@ -9,4 +9,7 @@ export async function signInWithGoogle(): Promise<void> {
   // TODO: redirect or fetch from Java backend, e.g.:
   // window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
   void API_BASE_URL;
+
+  // Static demo: navigate to dashboard until backend is ready
+  window.location.href = "/dashboard";
 }
