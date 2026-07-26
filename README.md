@@ -16,34 +16,134 @@ OffPitch is your invite-only party hub. Create a session, share the ID with your
 
 - **Singing Star**: A game-like interactive feature where a dynamic star appears over the head of the person who is currently singing, naturally passing the spotlight and keeping the party engaged!
 
+---
+
 ## 🛠️ Tech Stack
 
-- **Frontend**: [Next.js](https://nextjs.org/) (Single Page Application handling UI & Session State)
-- **Backend**: Java 21 & Spring Boot 4.1 (Built with Maven, no Lombok)
-- **Authentication**: OAuth2 Resource Server (Validating JWTs from Next.js)
-- **Database**: PostgreSQL (Leveraging JSONB for fast audio-timeline queries)
-- **Real-Time Communication**: WebRTC (Powered by Java Virtual Threads for massive scalability)
+| Layer | Technology | Why |
+| :--- | :--- | :--- |
+| **Frontend** | Next.js 16 + Tailwind CSS 4 | SPA handling UI, routing & session state |
+| **Backend** | Java 21 + Spring Boot 4.1 (Maven) | Virtual Threads for massive WebSocket concurrency |
+| **Auth** | NextAuth (Better Auth) → OAuth2 Resource Server | Frontend gets Google JWT; backend validates it |
+| **Database** | PostgreSQL (Supabase) | JSONB + GIN indexes for audio timeline data |
+| **Migrations** | Flyway | Version-controlled SQL migrations in the codebase |
+| **Real-Time** | WebRTC | Peer-to-peer audio/video with Spring WebSocket signaling |
+---
 
-## 🗄️ Database Schema Overview
+## 🗄️ Database Schema
 
 The Postgres database consists of the following core tables:
-- `users`: Stores user credentials, Google Auth details, and cool usernames.
-- `song`: Stores metadata for all available songs.
-- `session`: Manages active karaoke rooms/lobbies.
-- `song_detail`: Contains the dynamic audio data (bass, echo, and effects) mapped to specific timestamps. Stored as **JSONB** for blazing-fast querying via GIN indexes.
-- `session_users`: Maps users to their active sessions.
 
-## 🔌 Backend Endpoints
-
-| Endpoint | Description |
+| Table | Purpose |
 | :--- | :--- |
-| **`1. /login`** | Authenticate users and return access tokens. |
-| **`2. /signup`** | Register new users and set up their cool usernames. |
-| **`3. /dashboard`** | Main user dashboard showing create or join buttons. |
-| **`4. /create`** | Create a new karaoke session. |
-| **`5. /join`** | Join an existing session via an invite ID. |
-| **`6. /songlist`** | Retrieve the available list of songs to choose from. |
-| **`7. /songdetail`** | see song specific details. |
-| **`8. /karaokehouse`** | The core WebRTC signaling endpoint for real-time singing. | [This will need a lot of helper services.]
-| **`9. /upload`** | *(Private)* Dev-only endpoint to upload new songs. |
-| **`10. /moments`** | Triggered when the vibe is high; records a 30-second downloadable clip. |
+| `users` | User credentials, Google Auth details, and usernames |
+| `song` | Metadata for all available karaoke songs |
+| `session` | Active karaoke rooms / lobbies |
+| `song_detail` | Dynamic audio data (bass, echo, visual effects) mapped to timestamps — stored as **JSONB** with GIN indexes |
+| `session_users` | Maps users to their active sessions |
+
+### Database Migrations (Flyway)
+
+Schema is managed through **Flyway** migrations — versioned SQL files that live in the codebase, not in the Supabase dashboard. This means:
+
+- Schema changes are version-controlled alongside your code
+- Switching databases (Supabase → Railway, self-hosted Postgres, etc.) just works
+- Every developer gets an identical schema by simply running the app
+- Rollbacks and audit trails are built-in
+
+Migration files live in:
+```
+backend/src/main/resources/db/migration/
+  V1__create_users_table.sql
+  V2__create_song_table.sql
+  V3__create_session_tables.sql
+  ...
+```
+
+> **You never need to manually create tables in Supabase.** Flyway runs on application startup and applies any pending migrations automatically.
+
+---
+
+## 🔌 Backend API Endpoints
+
+| # | Endpoint | Method | Description |
+| :--- | :--- | :--- | :--- |
+| 1 | `/api/auth/login` | POST | Validate Google JWT and return access tokens |
+| 2 | `/api/auth/signup` | POST | Register new users with a chosen username |
+| 3 | `/api/dashboard` | GET | User dashboard — create or join options |
+| 4 | `/api/sessions` | POST | Create a new karaoke session |
+| 5 | `/api/sessions/{id}/join` | POST | Join an existing session via invite ID |
+| 6 | `/api/songs` | GET | List available songs to choose from |
+| 7 | `/api/songs/{id}` | GET | Song detail — audio timeline, effects data |
+| 8 | `/ws/karaoke/{sessionId}` | WS | WebRTC signaling endpoint for real-time singing |
+| 9 | `/api/songs/upload` | POST | *(Dev-only)* Upload new songs |
+| 10 | `/api/moments` | POST | Record a 30-second downloadable clip |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Java 21** (JDK)
+- **Node.js 20+** and npm
+- **A Supabase project** (free tier works)
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/your-username/OffPitch.git
+cd OffPitch
+```
+
+### 2. Backend Setup
+
+```bash
+cd backend
+
+# Copy and fill in environment variables
+cp env.example .env
+# Edit .env with your Supabase credentials (see env.example for instructions)
+
+# Run the Spring Boot app (Flyway will auto-create all tables)
+./mvnw spring-boot:run
+```
+
+The backend starts on `http://localhost:8080`.
+
+### 3. Frontend Setup
+
+```bash
+cd frontend/offpitch
+
+# Install dependencies
+npm install
+
+# Copy and fill in environment variables
+cp env.example .env
+# Edit .env with your Google OAuth credentials (see env.example for instructions)
+
+# Start the dev server
+npm run dev
+```
+
+The frontend starts on `http://localhost:3000`.
+
+---
+
+## 📁 Project Structure
+
+```
+OffPitch/
+├── backend/                          # Java 21 + Spring Boot 4.1
+├── frontend/offpitch/                # Next.js 16
+├── architecture-decisions.md         # Why Maven, no Lombok, Postgres, etc.
+├── java-vs-fastapi.md                # Why Java over Python for this app
+└── README.md                         # You are here
+```
+
+---
+
+## 📄 License
+
+This project is currently private and not licensed for distribution.
