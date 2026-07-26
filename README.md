@@ -49,7 +49,7 @@ Schema is managed through **Flyway** migrations — versioned SQL files that liv
 - Schema changes are version-controlled alongside your code
 - Switching databases (Supabase → Railway, self-hosted Postgres, etc.) just works
 - Every developer gets an identical schema by simply running the app
-- Rollbacks and audit trails are built-in
+- Every migration is recorded in a `flyway_schema_history` table (built-in audit trail)
 
 Migration files live in:
 ```
@@ -92,7 +92,7 @@ backend/src/main/resources/db/migration/
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/your-username/OffPitch.git
+git clone https://github.com/maitry4/OffPitch.git
 cd OffPitch
 ```
 

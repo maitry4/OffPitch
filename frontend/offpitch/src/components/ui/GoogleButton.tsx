@@ -1,6 +1,5 @@
 "use client";
 
-import { signInWithGoogle } from "@/lib/auth";
 import { glowButtonClass } from "./glowButtonStyles";
 
 type GoogleButtonProps = {
@@ -8,10 +7,16 @@ type GoogleButtonProps = {
 };
 
 export function GoogleButton({ className }: GoogleButtonProps) {
+  const handleSignIn = async () => {
+    // Dynamic import avoids pulling NextAuth server code into the client bundle
+    const { signIn } = await import("next-auth/react");
+    signIn("google", { callbackUrl: "/dashboard" });
+  };
+
   return (
     <button
       type="button"
-      onClick={() => signInWithGoogle()}
+      onClick={handleSignIn}
       aria-label="Continue with Google"
       className={
         className ??

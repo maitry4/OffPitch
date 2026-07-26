@@ -1,3 +1,17 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: backend
+  datasource:
+    url: ${JDBC_POSTGRES_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASS}
+    driver-class-name: org.postgresql.Driver
+
+  flyway:
+    enabled: true
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
