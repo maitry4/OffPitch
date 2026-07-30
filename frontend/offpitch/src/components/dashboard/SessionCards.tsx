@@ -1,3 +1,9 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createSession, joinSession } from "@/lib/sessions";
+
 type SessionCardProps = {
   icon: React.ReactNode;
   title: string;
@@ -17,30 +23,6 @@ export function SessionCard({ icon, title, description, children }: SessionCardP
 
       <div className="mt-6">{children}</div>
     </div>
-  );
-}
-
-export function CardArrowButton({ label }: { label?: string }) {
-  return (
-    <button
-      type="button"
-      className="flex w-full items-center justify-between rounded-xl bg-gradient-to-r from-red-600 via-red-500 to-red-600 px-5 py-3.5 text-sm font-semibold text-white shadow-[0_0_24px_rgba(239,68,68,0.45)] transition hover:shadow-[0_0_32px_rgba(239,68,68,0.55)]"
-    >
-      <span className="flex-1 text-center">{label ?? "Create Session"}</span>
-      <ArrowIcon />
-    </button>
-  );
-}
-
-export function JoinArrowButton() {
-  return (
-    <button
-      type="button"
-      aria-label="Join session"
-      className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl border border-red-500/50 bg-black/60 text-white shadow-[0_0_15px_rgba(239,68,68,0.25)] transition hover:border-red-500/70 hover:shadow-[0_0_20px_rgba(239,68,68,0.35)]"
-    >
-      <ArrowIcon />
-    </button>
   );
 }
 
@@ -71,32 +53,95 @@ function UsersIcon() {
 }
 
 export function CreateSessionCard() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleCreate = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const session = await createSession();
+      router.push(`/karaoke-house/${session.inviteCode}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create session");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SessionCard
       icon={<PlusIcon />}
       title="Create a Session"
       description="Start your own karaoke room and invite friends."
     >
-      <CardArrowButton label="Create Session" />
+      <button
+        type="button"
+        onClick={handleCreate}
+        disabled={loading}
+        className="flex w-full items-center justify-between rounded-xl bg-gradient-to-r from-red-600 via-red-500 to-red-600 px-5 py-3.5 text-sm font-semibold text-white shadow-[0_0_24px_rgba(239,68,68,0.45)] transition hover:shadow-[0_0_32px_rgba(239,68,68,0.55)] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <span className="flex-1 text-center">
+          {loading ? "Creating..." : "Create Session"}
+        </span>
+        <ArrowIcon />
+      </button>
+      {error && <p className="mt-3 text-xs text-red-400">{error}</p>}
     </SessionCard>
   );
 }
 
 export function JoinSessionCard() {
+  const router = useRouter();
+  const [inviteCode, setInviteCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleJoin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteCode.trim()) {
+      setError("Enter a session ID");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const session = await joinSession(inviteCode);
+      router.push(`/karaoke-house/${session.inviteCode}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to join session");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SessionCard
       icon={<UsersIcon />}
       title="Join a Session"
       description="Enter a session ID from your friend and join the fun."
     >
-      <div className="flex gap-3">
+      <form className="flex gap-3" onSubmit={handleJoin}>
         <input
           type="text"
+          name="sessionId"
+          value={inviteCode}
+          onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
           placeholder="Enter Session ID"
-          className="min-w-0 flex-1 rounded-xl border border-red-500/30 bg-black/80 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-red-500/50 focus:shadow-[0_0_12px_rgba(239,68,68,0.15)]"
+          className="min-w-0 flex-1 rounded-xl border border-red-500/30 bg-black/80 px-4 py-3 text-sm uppercase tracking-wider text-white placeholder:normal-case placeholder:tracking-normal placeholder:text-white/30 outline-none transition focus:border-red-500/50 focus:shadow-[0_0_12px_rgba(239,68,68,0.15)]"
         />
-        <JoinArrowButton />
-      </div>
+        <button
+          type="submit"
+          aria-label="Join session"
+          disabled={loading}
+          className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl border border-red-500/50 bg-black/60 text-white shadow-[0_0_15px_rgba(239,68,68,0.25)] transition hover:border-red-500/70 hover:shadow-[0_0_20px_rgba(239,68,68,0.35)] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <ArrowIcon />
+        </button>
+      </form>
+      {error && <p className="mt-3 text-xs text-red-400">{error}</p>}
     </SessionCard>
   );
 }

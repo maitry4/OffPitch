@@ -27,6 +27,7 @@ OffPitch is your invite-only party hub. Create a session, share the ID with your
 | **Auth** | NextAuth (Better Auth) → OAuth2 Resource Server | Frontend gets Google JWT; backend validates it |
 | **Database** | PostgreSQL (Supabase) | JSONB + GIN indexes for audio timeline data |
 | **Migrations** | Flyway | Version-controlled SQL migrations in the codebase |
+| **Media CDN** | Cloudinary | Karaoke MP3 delivery; backend returns URL + start timestamp |
 | **Real-Time** | WebRTC | Peer-to-peer audio/video with Spring WebSocket signaling |
 ---
 
@@ -57,10 +58,31 @@ backend/src/main/resources/db/migration/
   V1__create_users_table.sql
   V2__create_song_table.sql
   V3__create_session_tables.sql
+  V4__add_session_current_song.sql
   ...
 ```
 
 > **You never need to manually create tables in Supabase.** Flyway runs on application startup and applies any pending migrations automatically.
+
+### Karaoke audio + lyrics (what goes where)
+
+| Asset | Storage | Notes |
+| :--- | :--- | :--- |
+| **MP3 files** | Cloudinary `offpitch/songs` | CDN URL returned by backend |
+| **Lyrics JSON** | Postgres `song_detail.timeline` | Seeded from `backend/src/main/resources/songs/` — **not** uploaded to Cloudinary |
+
+**Playback sync:** when the host selects a song, the backend sets `session.song_started_at`. Every client in the room polls the session, loads the same Cloudinary `audioUrl`, and seeks to `elapsed = now - startedAt`, so music + lyrics stay aligned for all users.
+
+Step-by-step Cloudinary checklist: [`docs/cloudinary-songs.md`](docs/cloudinary-songs.md).
+
+Backend `.env` keys (see `backend/env.example`):
+
+```env
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+CLOUDINARY_FOLDER=offpitch/songs
+```
 
 ---
 
@@ -71,10 +93,12 @@ backend/src/main/resources/db/migration/
 | 1 | `/api/auth/login` | POST | Validate Google JWT and return access tokens |
 | 2 | `/api/auth/signup` | POST | Register new users with a chosen username |
 | 3 | `/api/dashboard` | GET | User dashboard — create or join options |
-| 4 | `/api/sessions` | POST | Create a new karaoke session |
-| 5 | `/api/sessions/{id}/join` | POST | Join an existing session via invite ID |
+| 4 | `/api/sessions` | POST | Create a new karaoke session (TTL 1.5h) |
+| 5 | `/api/sessions/{inviteCode}/join` | POST | Join an existing session via invite code |
+| 5b | `/api/sessions/{inviteCode}` | GET | Session members + current `playback` (song URL, startedAt, lyrics) |
+| 5c | `/api/sessions/{inviteCode}/songs/{songId}` | POST | Host selects a song (starts synced playback clock) |
 | 6 | `/api/songs` | GET | List available songs to choose from |
-| 7 | `/api/songs/{id}` | GET | Song detail — audio timeline, effects data |
+| 7 | `/api/songs/{id}` | GET | Song detail — lyrics timeline / effects data |
 | 8 | `/ws/karaoke/{sessionId}` | WS | WebRTC signaling endpoint for real-time singing |
 | 9 | `/api/songs/upload` | POST | *(Dev-only)* Upload new songs |
 | 10 | `/api/moments` | POST | Record a 30-second downloadable clip |
@@ -103,13 +127,18 @@ cd backend
 
 # Copy and fill in environment variables
 cp env.example .env
-# Edit .env with your Supabase credentials (see env.example for instructions)
+# Edit .env with:
+#   - Supabase JDBC URL / username / password
+#   - Google CLIENT_ID
+#   - Cloudinary CLOUDINARY_* (MP3 CDN only — see docs/cloudinary-songs.md)
 
-# Run the Spring Boot app (Flyway will auto-create all tables)
+# Run the Spring Boot app (Flyway migrates; SongCatalogSeeder loads lyrics JSON into DB)
 ./mvnw spring-boot:run
 ```
 
 The backend starts on `http://localhost:8080`.
+
+**Before first karaoke play:** upload MP3s to Cloudinary `offpitch/songs` and confirm Copy URL works (lyrics JSON are already in the repo under `backend/src/main/resources/songs/`).
 
 ### 3. Frontend Setup
 

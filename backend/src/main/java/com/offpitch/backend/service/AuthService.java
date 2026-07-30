@@ -32,12 +32,28 @@ public class AuthService {
                 existing.setEmail(email);
                 existing.setName(name);
                 existing.setPictureUrl(picture);
+                if (existing.getUsername() == null || existing.getUsername().isBlank()) {
+                    existing.setUsername(deriveUsername(name, email));
+                }
                 existing.setUpdatedAt(Instant.now());
                 return userRepository.save(existing);
             })
             .orElseGet(() -> {
                 User newUser = new User(googleId, email, name, picture);
+                if (newUser.getUsername() == null || newUser.getUsername().isBlank()) {
+                    newUser.setUsername(deriveUsername(name, email));
+                }
                 return userRepository.save(newUser);
             });
+    }
+
+    private static String deriveUsername(String name, String email) {
+        if (name != null && !name.isBlank()) {
+            return name.trim();
+        }
+        if (email != null && email.contains("@")) {
+            return email.substring(0, email.indexOf('@'));
+        }
+        return "singer";
     }
 }

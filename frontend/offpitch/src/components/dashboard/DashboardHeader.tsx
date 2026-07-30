@@ -1,6 +1,17 @@
+"use client";
+
+import { useSession } from "next-auth/react";
 import { WaveIcon } from "@/components/ui/WaveIcon";
+import { getInitials } from "@/lib/initials";
 
 export function DashboardHeader() {
+  const { data: session } = useSession();
+  const initials = getInitials(
+    session?.user?.name,
+    session?.username,
+    session?.user?.email,
+  );
+
   return (
     <header className="relative z-20 flex items-center justify-between px-6 py-5 sm:px-10 sm:py-6">
       <div className="flex items-center gap-2">
@@ -28,7 +39,7 @@ export function DashboardHeader() {
         >
           <span className="relative h-9 w-9 overflow-hidden rounded-full border border-red-500/40 bg-gradient-to-br from-red-900/80 to-black shadow-[0_0_12px_rgba(239,68,68,0.3)]">
             <span className="flex h-full w-full items-center justify-center text-xs font-semibold text-white/90">
-              OP
+              {initials}
             </span>
           </span>
           <ChevronDownIcon />
