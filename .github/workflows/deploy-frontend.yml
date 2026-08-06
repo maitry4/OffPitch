@@ -33,8 +33,10 @@ jobs:
             CLIENT_ID
             CLIENT_SECRET
             NEXT_PUBLIC_API_URL
+            AUTH_URL
         env:
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
           CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          AUTH_URL: "https://offpitch.probmaitry.workers.dev"

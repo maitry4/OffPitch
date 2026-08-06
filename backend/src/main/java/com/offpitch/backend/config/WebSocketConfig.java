@@ -13,7 +13,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     private final SignalWebSocketHandler signalWebSocketHandler;
 
-    @Value("${ALLOWED_ORIGINS:http://localhost:3000}")
+    @Value("${ALLOWED_ORIGINS:http://localhost:3000,https://offpitch.probmaitry.workers.dev}")
     private String allowedOrigins;
 
     public WebSocketConfig(SignalWebSocketHandler signalWebSocketHandler) {
