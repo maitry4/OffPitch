@@ -50,7 +50,7 @@ If Copy URL uses `/raw/upload/` instead of `/video/upload/`, tell the backend by
 
 | File | Expected public_id |
 |---|---|
-| `him-i_m.mp3` | `offpitch/songs/him-i_m` |
+| `him-i_m.mp3` | `https://res.cloudinary.com/fzkoxpca/video/upload/v1785436018/him-i_m_zzgxzu.mp3` (or `him-i_m_zzgxzu`) |
 | `Gallan_Goodiyaan_m.mp3` | `offpitch/songs/Gallan_Goodiyaan_m` |
 
 If Cloudinary renamed them, either rename in Cloudinary or update `song.audio_url` in the DB.

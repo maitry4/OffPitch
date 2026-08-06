@@ -58,7 +58,7 @@ public class SongCatalogSeeder implements ApplicationRunner {
             "G-Eazy & Halsey",
             "Him & I",
             264,
-            cloudinary.getFolder() + "/him-i_m",
+            "https://res.cloudinary.com/fzkoxpca/video/upload/v1785436018/him-i_m_zzgxzu.mp3",
             "songs/him_i.json"
         );
 
