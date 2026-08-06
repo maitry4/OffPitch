@@ -69,10 +69,17 @@ public class SongService {
         return map;
     }
 
-    public Map<String, Object> toPlaybackPayload(Song song, SongDetail detail, java.time.Instant startedAt) {
+    public Map<String, Object> toPlaybackPayload(
+            Song song,
+            SongDetail detail,
+            java.time.Instant startedAt,
+            boolean isPaused,
+            long positionMs) {
         Map<String, Object> map = toSummary(song);
         map.put("startedAt", startedAt.toString());
         map.put("serverNow", java.time.Instant.now().toString());
+        map.put("isPaused", isPaused);
+        map.put("positionMs", Math.max(0, positionMs));
         map.put("timeline", detail != null ? detail.getTimeline() : Map.of("lyrics", List.of(), "effects", List.of()));
         return map;
     }

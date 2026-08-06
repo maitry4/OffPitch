@@ -1,3 +1,8 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { MicOffIcon } from "./icons";
+
 type MemberTileProps = {
   name: string;
   initials: string;
@@ -5,6 +10,10 @@ type MemberTileProps = {
   showCrown?: boolean;
   isActive?: boolean;
   className?: string;
+  stream?: MediaStream | null;
+  camOn?: boolean;
+  micOn?: boolean;
+  muted?: boolean;
 };
 
 export function MemberTile({
@@ -14,8 +23,29 @@ export function MemberTile({
   showCrown = false,
   isActive = false,
   className,
+  stream = null,
+  camOn = false,
+  micOn = true,
+  muted = false,
 }: MemberTileProps) {
   const isLarge = size === "lg";
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const showVideo = Boolean(stream && camOn);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (stream) {
+      if (video.srcObject !== stream) {
+        video.srcObject = stream;
+      }
+      void video.play().catch(() => {
+        // autoplay can fail until user gesture
+      });
+    } else {
+      video.srcObject = null;
+    }
+  }, [stream]);
 
   return (
     <div
@@ -27,6 +57,16 @@ export function MemberTile({
     >
       <div className="absolute inset-0 bg-gradient-to-br from-red-950/50 via-zinc-900 to-black" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(239,68,68,0.18),transparent_60%)]" />
+
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted={muted}
+        className={`absolute inset-0 z-[1] h-full w-full object-cover ${
+          showVideo ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      />
 
       <div className="relative z-10 flex h-full min-h-[110px] flex-col items-center justify-center gap-2 p-3 sm:min-h-[120px]">
         {showCrown && (
@@ -42,19 +82,25 @@ export function MemberTile({
           </div>
         )}
 
-        <span
-          className={`flex items-center justify-center rounded-full border border-red-500/40 bg-black/50 font-semibold text-white shadow-[0_0_16px_rgba(239,68,68,0.25)] ${
-            isLarge ? "h-20 w-20 text-2xl sm:h-24 sm:w-24 sm:text-3xl" : "h-14 w-14 text-lg"
-          }`}
-        >
-          {initials}
-        </span>
+        {!showVideo && (
+          <span
+            className={`flex items-center justify-center rounded-full border border-red-500/40 bg-black/50 font-semibold text-white shadow-[0_0_16px_rgba(239,68,68,0.25)] ${
+              isLarge ? "h-20 w-20 text-2xl sm:h-24 sm:w-24 sm:text-3xl" : "h-14 w-14 text-lg"
+            }`}
+          >
+            {initials}
+          </span>
+        )}
 
         <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1.5 rounded-md bg-black/45 px-2 py-1 backdrop-blur-sm">
           <span className={`font-medium text-white ${isLarge ? "text-xs sm:text-sm" : "text-[11px]"}`}>
             {name}
           </span>
-          <SignalBars className="h-2.5 w-3.5 text-emerald-400" />
+          {!micOn ? (
+            <MicOffIcon className="h-3 w-3 text-red-400" />
+          ) : (
+            <SignalBars className="h-2.5 w-3.5 text-emerald-400" />
+          )}
         </div>
       </div>
     </div>

@@ -23,11 +23,15 @@ export type SongSummary = {
 export type SongPlayback = SongSummary & {
   startedAt: string;
   serverNow: string;
+  isPaused?: boolean;
+  positionMs?: number;
   timeline: {
     lyrics: LyricLine[];
     effects: unknown[];
   };
 };
+
+export type PlaybackAction = "pause" | "play" | "seek" | "replay";
 
 async function authHeaders(): Promise<HeadersInit> {
   const session = await getSession();
@@ -76,6 +80,22 @@ export async function selectSessionSong(
     {
       method: "POST",
       headers: await authHeaders(),
+    },
+  );
+  return parseJson(res);
+}
+
+export async function updateSessionPlayback(
+  inviteCode: string,
+  action: PlaybackAction,
+  positionMs: number,
+): Promise<unknown> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/sessions/${encodeURIComponent(inviteCode)}/playback`,
+    {
+      method: "POST",
+      headers: await authHeaders(),
+      body: JSON.stringify({ action, positionMs }),
     },
   );
   return parseJson(res);

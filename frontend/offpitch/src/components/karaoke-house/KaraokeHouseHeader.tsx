@@ -1,11 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { WaveIcon } from "@/components/ui/WaveIcon";
 import { displayName, getInitials } from "@/lib/initials";
 import type { SessionMember } from "@/lib/sessions";
 import {
-  ChevronDownIcon,
   CopyIcon,
   LeaveIcon,
   LockIcon,
@@ -17,9 +15,17 @@ type Props = {
   inviteCode: string;
   peopleCount: number;
   members: SessionMember[];
+  onLeave: () => void;
+  leaving?: boolean;
 };
 
-export function KaraokeHouseHeader({ inviteCode, peopleCount, members }: Props) {
+export function KaraokeHouseHeader({
+  inviteCode,
+  peopleCount,
+  members,
+  onLeave,
+  leaving = false,
+}: Props) {
   const preview = members.slice(0, 3);
   const extra = Math.max(peopleCount - preview.length, 0);
 
@@ -55,13 +61,15 @@ export function KaraokeHouseHeader({ inviteCode, peopleCount, members }: Props) 
             <PeopleIcon className="h-3.5 w-3.5" />
             People ({peopleCount})
           </button>
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-1 rounded-full border border-red-500/50 px-2.5 py-1.5 text-[11px] font-medium text-red-400"
+          <button
+            type="button"
+            disabled={leaving}
+            onClick={onLeave}
+            className="flex items-center gap-1 rounded-full border border-red-500/50 px-2.5 py-1.5 text-[11px] font-medium text-red-400 disabled:opacity-50"
           >
             <LeaveIcon className="h-3.5 w-3.5" />
-            Leave
-          </Link>
+            {leaving ? "Leaving…" : "Leave"}
+          </button>
         </div>
       </div>
 
@@ -94,8 +102,6 @@ export function KaraokeHouseHeader({ inviteCode, peopleCount, members }: Props) 
           </div>
         </div>
 
-        <AudioControls />
-
         <div className="flex items-center gap-3">
           <div className="flex items-center -space-x-2">
             {preview.map((m) => (
@@ -122,13 +128,15 @@ export function KaraokeHouseHeader({ inviteCode, peopleCount, members }: Props) 
             People ({peopleCount})
           </button>
 
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 rounded-full border border-red-500/45 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/20"
+          <button
+            type="button"
+            disabled={leaving}
+            onClick={onLeave}
+            className="flex items-center gap-2 rounded-full border border-red-500/45 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/20 disabled:opacity-50"
           >
             <LeaveIcon className="h-4 w-4" />
-            Leave Room
-          </Link>
+            {leaving ? "Leaving…" : "Leave Room"}
+          </button>
         </div>
       </div>
     </header>
@@ -161,44 +169,6 @@ export function RoomInfoCard({ inviteCode }: { inviteCode: string }) {
           <CopyIcon className="h-3 w-3" />
         </button>
       </div>
-
-      <div className="mt-3 flex items-center gap-3 border-t border-white/10 pt-3">
-        <AudioControls compact />
-      </div>
     </div>
-  );
-}
-
-function AudioControls({ compact = false }: { compact?: boolean }) {
-  return (
-    <div className={`flex items-center ${compact ? "w-full gap-2" : "gap-3"}`}>
-      <ControlPill label="Bass" value="Medium" className={compact ? "flex-1" : ""} />
-      {!compact && <div className="hidden h-6 w-px bg-white/10 xl:block" />}
-      {compact && <div className="h-8 w-px bg-white/10" />}
-      <ControlPill label="Echo" value="Hall" className={compact ? "flex-1" : ""} />
-    </div>
-  );
-}
-
-function ControlPill({
-  label,
-  value,
-  className,
-}: {
-  label: string;
-  value: string;
-  className?: string;
-}) {
-  return (
-    <button
-      type="button"
-      className={`flex items-center justify-between gap-2 rounded-full border border-white/12 bg-black/50 px-3.5 py-2 text-left text-sm text-white/90 transition hover:border-white/25 ${className ?? ""}`}
-    >
-      <span className="flex flex-col leading-tight">
-        <span className="text-[10px] uppercase tracking-wide text-white/40">{label}</span>
-        <span className="font-medium">{value}</span>
-      </span>
-      <ChevronDownIcon className="h-3.5 w-3.5 text-white/45" />
-    </button>
   );
 }

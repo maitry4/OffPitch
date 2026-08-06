@@ -9,6 +9,7 @@ import com.offpitch.backend.repository.KaraokeSessionRepository;
 import com.offpitch.backend.repository.SessionUserRepository;
 import com.offpitch.backend.repository.SongDetailRepository;
 import com.offpitch.backend.repository.UserRepository;
+import com.offpitch.backend.signal.SignalBroadcaster;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,18 +38,21 @@ public class SessionService {
     private final UserRepository userRepository;
     private final SongService songService;
     private final SongDetailRepository songDetailRepository;
+    private final SignalBroadcaster signalBroadcaster;
 
     public SessionService(
             KaraokeSessionRepository sessionRepository,
             SessionUserRepository sessionUserRepository,
             UserRepository userRepository,
             SongService songService,
-            SongDetailRepository songDetailRepository) {
+            SongDetailRepository songDetailRepository,
+            SignalBroadcaster signalBroadcaster) {
         this.sessionRepository = sessionRepository;
         this.sessionUserRepository = sessionUserRepository;
         this.userRepository = userRepository;
         this.songService = songService;
         this.songDetailRepository = songDetailRepository;
+        this.signalBroadcaster = signalBroadcaster;
     }
 
     @Transactional
@@ -88,6 +92,49 @@ public class SessionService {
     }
 
     /**
+     * Remove a user from the room. Host transfers to the next remaining member if needed.
+     * Idempotent if the user is already gone.
+     */
+    @Transactional
+    public void leaveSession(String inviteCode, User user) {
+        leaveSession(inviteCode, user.getId());
+    }
+
+    @Transactional
+    public void leaveSession(String inviteCode, UUID userId) {
+        KaraokeSession session = sessionRepository.findByInviteCodeIgnoreCase(inviteCode.trim())
+            .orElse(null);
+        if (session == null) {
+            return;
+        }
+
+        if (!sessionUserRepository.existsBySessionIdAndUserId(session.getId(), userId)) {
+            return;
+        }
+
+        sessionUserRepository.deleteBySessionIdAndUserId(session.getId(), userId);
+
+        List<SessionUser> remaining =
+            sessionUserRepository.findBySessionIdOrderByJoinedAtAsc(session.getId());
+
+        if (remaining.isEmpty()) {
+            session.clearSong();
+            session.setUpdatedAt(Instant.now());
+            sessionRepository.save(session);
+            signalBroadcaster.broadcastPeerLeft(session.getInviteCode(), userId);
+            return;
+        }
+
+        if (session.getHostUserId().equals(userId)) {
+            session.setHostUserId(remaining.get(0).getUserId());
+        } else {
+            session.setUpdatedAt(Instant.now());
+        }
+        sessionRepository.save(session);
+        signalBroadcaster.broadcastPeerLeft(session.getInviteCode(), userId);
+    }
+
+    /**
      * Host selects a song — stamps song_started_at so every client can sync playback
      * from the Cloudinary audio URL.
      */
@@ -108,6 +155,52 @@ public class SessionService {
         sessionRepository.save(session);
 
         return toResponse(session, user.getId());
+    }
+
+    /**
+     * Any room member can pause / play / seek / replay — state is shared for everyone.
+     */
+    @Transactional
+    public Map<String, Object> updatePlayback(String inviteCode, User user, Map<String, Object> body) {
+        KaraokeSession session = findActiveByInviteCode(inviteCode);
+
+        if (!sessionUserRepository.existsBySessionIdAndUserId(session.getId(), user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not in this session");
+        }
+        if (session.getCurrentSongId() == null || session.getSongStartedAt() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No song is playing");
+        }
+
+        String action = body.get("action") == null ? "" : String.valueOf(body.get("action")).trim().toLowerCase();
+        long positionMs = parsePositionMs(body.get("positionMs"));
+
+        switch (action) {
+            case "pause" -> session.pauseAt(positionMs);
+            case "play" -> session.resumeAt(positionMs);
+            case "seek" -> session.seekTo(positionMs, session.isPaused());
+            case "replay" -> session.replay();
+            default -> throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "action must be pause, play, seek, or replay"
+            );
+        }
+
+        sessionRepository.save(session);
+        return toResponse(session, user.getId());
+    }
+
+    private static long parsePositionMs(Object raw) {
+        if (raw == null) {
+            return 0;
+        }
+        if (raw instanceof Number n) {
+            return Math.max(0, n.longValue());
+        }
+        try {
+            return Math.max(0, Long.parseLong(String.valueOf(raw)));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private KaraokeSession findActiveByInviteCode(String inviteCode) {
@@ -165,7 +258,22 @@ public class SessionService {
 
         Song song = songService.requireSong(session.getCurrentSongId());
         SongDetail detail = songDetailRepository.findBySongId(song.getId()).orElse(null);
-        return songService.toPlaybackPayload(song, detail, session.getSongStartedAt());
+
+        boolean paused = session.isPaused();
+        long positionMs;
+        if (paused && session.getPausePositionMs() != null) {
+            positionMs = session.getPausePositionMs();
+        } else {
+            positionMs = Math.max(0, Duration.between(session.getSongStartedAt(), Instant.now()).toMillis());
+        }
+
+        return songService.toPlaybackPayload(
+            song,
+            detail,
+            session.getSongStartedAt(),
+            paused,
+            positionMs
+        );
     }
 
     private String generateUniqueInviteCode() {

@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface SessionUserRepository extends JpaRepository<SessionUser, UUID> {
 
@@ -15,4 +17,8 @@ public interface SessionUserRepository extends JpaRepository<SessionUser, UUID> 
     boolean existsBySessionIdAndUserId(UUID sessionId, UUID userId);
 
     long countBySessionId(UUID sessionId);
+
+    @Modifying(clearAutomatically = true)
+    @Transactional
+    void deleteBySessionIdAndUserId(UUID sessionId, UUID userId);
 }

@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -54,5 +55,22 @@ public class SessionController {
             @PathVariable UUID songId) {
         User user = currentUserService.requireCurrentUser();
         return ResponseEntity.ok(sessionService.selectSong(inviteCode, songId, user));
+    }
+
+    /** POST /api/sessions/{inviteCode}/playback — shared pause / play / seek / replay. */
+    @PostMapping("/{inviteCode}/playback")
+    public ResponseEntity<Map<String, Object>> updatePlayback(
+            @PathVariable String inviteCode,
+            @RequestBody Map<String, Object> body) {
+        User user = currentUserService.requireCurrentUser();
+        return ResponseEntity.ok(sessionService.updatePlayback(inviteCode, user, body));
+    }
+
+    /** POST /api/sessions/{inviteCode}/leave — remove yourself from the room. */
+    @PostMapping("/{inviteCode}/leave")
+    public ResponseEntity<Void> leaveSession(@PathVariable String inviteCode) {
+        User user = currentUserService.requireCurrentUser();
+        sessionService.leaveSession(inviteCode, user);
+        return ResponseEntity.noContent().build();
     }
 }

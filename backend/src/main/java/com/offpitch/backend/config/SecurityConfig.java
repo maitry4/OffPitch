@@ -27,6 +27,10 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
+                // Karaoke MP3s must be fetchable by <audio> without a Bearer token.
+                .requestMatchers("/media/**").permitAll()
+                // WebSocket handshake; JWT is validated inside SignalWebSocketHandler.
+                .requestMatchers("/ws/**").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 ->

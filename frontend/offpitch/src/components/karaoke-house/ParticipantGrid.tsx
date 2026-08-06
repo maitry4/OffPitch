@@ -2,14 +2,38 @@
 
 import { displayName, getInitials } from "@/lib/initials";
 import type { SessionMember } from "@/lib/sessions";
+import type { PeerMediaState } from "@/hooks/useRoomRtc";
 import { MemberTile } from "./MemberTile";
 
-export function ParticipantGrid({ members }: { members: SessionMember[] }) {
-  const labeled = members.map((m) => ({
-    ...m,
-    label: m.isYou ? "You" : displayName(m.name, m.username, m.email),
-    initials: getInitials(m.name, m.username, m.email),
-  }));
+type ParticipantGridProps = {
+  members: SessionMember[];
+  localStream?: MediaStream | null;
+  localCamOn?: boolean;
+  localMicOn?: boolean;
+  remoteStreams?: Map<string, MediaStream>;
+  peerMedia?: Map<string, PeerMediaState>;
+};
+
+export function ParticipantGrid({
+  members,
+  localStream = null,
+  localCamOn = false,
+  localMicOn = false,
+  remoteStreams = new Map(),
+  peerMedia = new Map(),
+}: ParticipantGridProps) {
+  const labeled = members.map((m) => {
+    const remote = peerMedia.get(m.id);
+    return {
+      ...m,
+      label: m.isYou ? "You" : displayName(m.name, m.username, m.email),
+      initials: getInitials(m.name, m.username, m.email),
+      stream: m.isYou ? localStream : remoteStreams.get(m.id) ?? null,
+      camOn: m.isYou ? localCamOn : Boolean(remote?.camOn && remoteStreams.get(m.id)),
+      micOn: m.isYou ? localMicOn : remote?.micOn ?? true,
+      muted: m.isYou,
+    };
+  });
 
   const mobile = labeled.slice(0, 4);
   const desktopOthers = labeled.filter((m) => !m.isYou).slice(0, 5);
@@ -24,6 +48,10 @@ export function ParticipantGrid({ members }: { members: SessionMember[] }) {
             initials={m.initials}
             isActive={m.isHost}
             className="aspect-[4/3] min-h-[110px]"
+            stream={m.stream}
+            camOn={m.camOn}
+            micOn={m.micOn}
+            muted={m.muted}
           />
         ))}
         {mobile.length === 0 && (
@@ -38,6 +66,10 @@ export function ParticipantGrid({ members }: { members: SessionMember[] }) {
             name={m.label}
             initials={m.initials}
             className="aspect-[5/4] min-h-[120px]"
+            stream={m.stream}
+            camOn={m.camOn}
+            micOn={m.micOn}
+            muted={m.muted}
           />
         ))}
         {desktopOthers.length === 0 && (

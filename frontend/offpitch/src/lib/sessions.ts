@@ -85,3 +85,19 @@ export async function getSessionRoom(inviteCode: string): Promise<KaraokeSession
   });
   return parseJson<KaraokeSessionResponse>(res);
 }
+
+/** Remove yourself from the room so others stop seeing you. */
+export async function leaveSession(inviteCode: string): Promise<void> {
+  const code = inviteCode.trim().toUpperCase();
+  const res = await fetch(
+    `${API_BASE_URL}/api/sessions/${encodeURIComponent(code)}/leave`,
+    {
+      method: "POST",
+      headers: await authHeaders(),
+    },
+  );
+  if (res.status === 204 || res.ok) {
+    return;
+  }
+  await parseJson<unknown>(res);
+}

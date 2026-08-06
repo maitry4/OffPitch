@@ -80,6 +80,59 @@ export function CameraIcon({ className }: { className?: string }) {
   );
 }
 
+export function CameraOffIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M2 2l20 20" />
+      <path d="M7 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14" />
+      <path d="M17 7h1l3-3v12l-2.2-2.2" />
+      <path d="M12 12a3 3 0 0 0-3-3" />
+    </svg>
+  );
+}
+
+export function MicIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <rect x="9" y="2" width="6" height="12" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0" />
+      <path d="M12 18v4" />
+      <path d="M8 22h8" />
+    </svg>
+  );
+}
+
+export function MicOffIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M2 2l20 20" />
+      <path d="M9 9v2a3 3 0 0 0 5.1 2.1" />
+      <path d="M15 6.2V5a3 3 0 0 0-5.7-1.3" />
+      <path d="M5 11a7 7 0 0 0 11.2 5.5" />
+      <path d="M19 11c0 .7-.1 1.4-.3 2" />
+      <path d="M12 18v4" />
+      <path d="M8 22h8" />
+    </svg>
+  );
+}
+
+export function PlayIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M8 5v14l11-7L8 5z" />
+    </svg>
+  );
+}
+
+export function ReplayIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M3 12a9 9 0 1 0 3-6.7" />
+      <path d="M3 4v5h5" />
+    </svg>
+  );
+}
+
 export function CrownIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
