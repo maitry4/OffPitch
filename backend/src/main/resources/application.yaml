@@ -1,11 +1,9 @@
 spring:
   config:
     import: optional:file:.env[.properties]
+
   application:
     name: backend
-
-server:
-  port: ${PORT:8080}
 
   datasource:
     url: ${JDBC_POSTGRES_URL}
@@ -19,3 +17,6 @@ server:
   jpa:
     hibernate:
       ddl-auto: validate
+
+server:
+  port: ${PORT:8080}
