@@ -49,3 +49,17 @@ The actual cause was that **Cloudflare Workers do not automatically inherit envi
 **The Solution:** 
 - We realized that CORS does not apply to Server-to-Server calls (which is how the Next.js `jwt` callback communicates with the backend).
 - We updated our GitHub Actions workflow (`deploy-frontend.yml`) to explicitly upload these variables to Cloudflare as secrets using `wrangler secret put` before running `wrangler deploy`. (Alternatively, these can be manually entered once in the Cloudflare Dashboard under Settings -> Variables and Secrets).
+
+---
+
+## 5. The CI/CD Problem: GitHub Actions Failing on Backend Tests
+**The Goal:** Automatically build and test the Java Spring Boot backend using GitHub Actions (`mvn verify`) before triggering the Render deployment.
+
+**The Issue:** The GitHub Actions workflow failed during the `Build & Test` step, dumping a massive "Conditions Evaluation Report" and an `Error starting ApplicationContext` message. 
+While the backend successfully deployed on Render (because Render had the `JDBC_POSTGRES_URL`, `DB_USERNAME`, and `DB_PASS` environment variables), the GitHub Actions runner did not have these credentials. When Maven ran the tests (`@SpringBootTest`), Spring Boot attempted to start the application context, tried to connect to the database to run Flyway migrations, and crashed because the credentials were missing.
+
+**The Solution:**
+To resolve this, you can either:
+1. Provide the database secrets (`JDBC_POSTGRES_URL`, `DB_USERNAME`, `DB_PASS`) to the GitHub Actions `Build & Test` step via GitHub Repository Secrets so the test context can connect to a database.
+2. (Recommended) Skip tests during the CI build by changing the command to `./mvnw clean package -DskipTests`, leaving the actual runtime verification to Render.
+3. Use a lightweight in-memory database like H2 specifically for the `test` profile so GitHub Actions doesn't need external database credentials to pass the build phase.
