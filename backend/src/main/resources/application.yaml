@@ -3,6 +3,10 @@ spring:
     import: optional:file:.env[.properties]
   application:
     name: backend
+
+server:
+  port: ${PORT:8080}
+
   datasource:
     url: ${JDBC_POSTGRES_URL}
     username: ${DB_USERNAME}
